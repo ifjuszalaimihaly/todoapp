@@ -11,7 +11,7 @@ COPY . .
 RUN npm install
 
 # Port kitettsége
-EXPOSE 8080
+EXPOSE 81
 
 # Alkalmazás indítása
 CMD ["npm", "run", "serve"]

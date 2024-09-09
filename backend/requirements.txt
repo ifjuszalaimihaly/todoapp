@@ -6,3 +6,5 @@ sqlalchemy-filters
 flask
 flask-cors
 marshmallow
+Flask-JWT-Extended
+werkzeug

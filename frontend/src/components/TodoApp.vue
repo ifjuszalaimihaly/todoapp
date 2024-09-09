@@ -34,9 +34,19 @@ export default {
     this.fetchTodos();
   },
   methods: {
+    // Helper metódus az Authorization fejléc beállításához
+    getAuthHeader() {
+      const token = localStorage.getItem('jwt_token');
+      return {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+    },
+
     async fetchTodos() {
       try {
-        const response = await axios.get('http://127.0.0.1:88/todos');
+        const response = await axios.get('http://127.0.0.1:88/todos', this.getAuthHeader());
         this.todos = response.data.map(todo => ({
           id: todo.id,
           title: todo.title,
@@ -53,7 +63,7 @@ export default {
           const response = await axios.post('http://127.0.0.1:88/todos', {
             title: this.newTodo,
             completed: false
-          });
+          }, this.getAuthHeader());
 
           // Push the new todo returned from the server
           this.todos.push({
@@ -72,7 +82,7 @@ export default {
     async removeTodo(index, id) {
       try {
         // Send a DELETE request to the backend
-        await axios.delete(`http://127.0.0.1:88/todos/${id}`);
+        await axios.delete(`http://127.0.0.1:88/todos/${id}`, this.getAuthHeader());
 
         // If successful, remove the todo from the list
         this.todos.splice(index, 1);
@@ -90,7 +100,7 @@ export default {
           await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
             title: todo.title,
             completed: todo.completed
-          });
+          }, this.getAuthHeader());
 
           todo.isEditing = false;
         } catch (error) {
@@ -106,7 +116,7 @@ export default {
         await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
           title: todo.title,
           completed: todo.completed
-        });
+        }, this.getAuthHeader());
       } catch (error) {
         console.error('Error updating todo:', error);
       }

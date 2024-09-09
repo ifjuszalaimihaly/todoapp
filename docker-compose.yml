@@ -12,7 +12,7 @@ services:
     container_name: frontendtodo
     build: frontend
     ports:
-      - 0.0.0.0:81:8080
+      - 0.0.0.0:81:81
     pull_policy: always
     restart: unless-stopped
 
