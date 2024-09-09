@@ -72,7 +72,12 @@ def update_todo(id):
             return jsonify({"error": "Todo not found"}), 404
         
         data = request.json
-        todo.title = data.get('title', todo.title)  # Csak a 'title'-t frissítjük
+
+        # Frissítjük a 'title' és 'completed' mezőket, ha a kérés tartalmazza azokat, és nem 'null'
+        if 'title' in data and data['title'] is not None:
+            todo.title = data['title']
+        if 'completed' in data and data['completed'] is not None:
+            todo.completed = data['completed']
         session.commit()
         return jsonify(todo_schema.dump(todo)), 200
     except SQLAlchemyError as e:
