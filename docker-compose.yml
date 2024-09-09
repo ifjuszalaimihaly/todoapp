@@ -1,10 +1,42 @@
 version: '3.8'
 
 services:
-  todofrontend:
-    container_name: todofrontend
+
+  backend:
+    container_name: backendtodo
+    build: backend
+    ports:
+      - 0.0.0.0:88:88
+
+  frontend:
+    container_name: frontendtodo
     build: frontend
     ports:
-      - 0.0.0.0:8080:8080
+      - 0.0.0.0:81:8080
+    pull_policy: always
+    restart: unless-stopped
+
+  mysqldatabase:
+    container_name: dbtodo
+    image: mysql:5.7
+    pull_policy: always
+    restart: unless-stopped
+    ports:
+      - 0.0.0.0:33063:3306
+    env_file:
+      - .env
+    volumes:
+        - ./mysql/data:/var/lib/mysql
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  phpmyadmin:
+    container_name: phpmyadmitodo
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: dbtodo
+    ports:
+      - 127.0.0.1:82:80
+    depends_on:
+      - mysqldatabase
     pull_policy: always
     restart: unless-stopped

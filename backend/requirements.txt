@@ -1,0 +1,8 @@
+python-dotenv
+pymysql
+mysqlclient
+sqlalchemy
+sqlalchemy-filters
+flask
+flask-cors
+marshmallow
