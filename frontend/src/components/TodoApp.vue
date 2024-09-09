@@ -5,22 +5,24 @@
     <input v-model="newTodo" @keyup.enter="addTodo" placeholder="Add a new todo" />
 
     <ul>
-      <li v-for="(todo, index) in todos" :key="index">
+      <li v-for="(todo, index) in todos" :key="todo.id">
         <label v-if="!todo.isEditing" :class="{ completed: todo.completed }">
-          <input type="checkbox" v-model="todo.completed" />
-          {{ todo.text }}
+          <input type="checkbox" v-model="todo.completed" @change="updateTodo(todo)" />
+          {{ todo.title }}
         </label>
-        <input v-if="todo.isEditing" v-model="todo.text" @keyup.enter="doneEdit(todo)" @blur="doneEdit(todo)" />
+        <input v-if="todo.isEditing" v-model="todo.title" @keyup.enter="doneEdit(todo)" @blur="doneEdit(todo)" />
 
         <button @click="editTodo(index)" v-if="!todo.isEditing">Edit</button>
         <button @click="doneEdit(todo)" v-if="todo.isEditing">Save</button>
-        <button @click="removeTodo(index)">Delete</button>
+        <button @click="removeTodo(index, todo.id)">Delete</button>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -28,24 +30,85 @@ export default {
       todos: []
     };
   },
+  created() {
+    this.fetchTodos();
+  },
   methods: {
-    addTodo() {
-      if (this.newTodo.trim()) {
-        this.todos.push({ text: this.newTodo, completed: false, isEditing: false });
-        this.newTodo = '';
+    async fetchTodos() {
+      try {
+        const response = await axios.get('http://127.0.0.1:88/todos');
+        this.todos = response.data.map(todo => ({
+          id: todo.id,
+          title: todo.title,
+          completed: todo.completed || false,
+          isEditing: false
+        }));
+      } catch (error) {
+        console.error('Error fetching todos:', error);
       }
     },
-    removeTodo(index) {
-      this.todos.splice(index, 1);
+    async addTodo() {
+      if (this.newTodo.trim()) {
+        try {
+          const response = await axios.post('http://127.0.0.1:88/todos', {
+            title: this.newTodo,
+            completed: false
+          });
+
+          // Push the new todo returned from the server
+          this.todos.push({
+            id: response.data.id, // Get the real ID from the backend
+            title: response.data.title,
+            completed: response.data.completed,
+            isEditing: false
+          });
+
+          this.newTodo = ''; // Reset the input field
+        } catch (error) {
+          console.error('Error adding todo:', error);
+        }
+      }
+    },
+    async removeTodo(index, id) {
+      try {
+        // Send a DELETE request to the backend
+        await axios.delete(`http://127.0.0.1:88/todos/${id}`);
+
+        // If successful, remove the todo from the list
+        this.todos.splice(index, 1);
+      } catch (error) {
+        console.error('Error deleting todo:', error);
+      }
     },
     editTodo(index) {
       this.todos[index].isEditing = true;
     },
-    doneEdit(todo) {
-      if (todo.text.trim()) {
-        todo.isEditing = false;
+    async doneEdit(todo) {
+      if (todo.title.trim()) {
+        try {
+          // Send a PUT request to update the todo on the server
+          await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
+            title: todo.title,
+            completed: todo.completed
+          });
+
+          todo.isEditing = false;
+        } catch (error) {
+          console.error('Error updating todo:', error);
+        }
       } else {
-        this.removeTodo(this.todos.indexOf(todo));
+        this.removeTodo(this.todos.indexOf(todo), todo.id);
+      }
+    },
+    async updateTodo(todo) {
+      try {
+        // Send a PUT request to update the todo's completed status
+        await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
+          title: todo.title,
+          completed: todo.completed
+        });
+      } catch (error) {
+        console.error('Error updating todo:', error);
       }
     }
   }
@@ -79,21 +142,7 @@ li {
   border-bottom: 1px solid #ccc;
 }
 
-label.completed {
+.completed {
   text-decoration: line-through;
-}
-
-button {
-  background-color: #ff0000;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-input[type="text"]:focus {
-  outline: none;
-  border: 1px solid #333;
 }
 </style>
