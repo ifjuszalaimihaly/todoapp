@@ -61,7 +61,8 @@
   
           // JWT token mentése localStorage-ba
           localStorage.setItem('jwt_token', token);
-  
+          localStorage.setItem('username', this.username); // Username mentése localStorage-ba
+          
           // A token elmentése után a router újratöltése, a Todo app komponens betöltése
           this.$router.push({ name: 'TodoApp' }).then(() => {
             this.$router.go(0); // Az oldal újratöltése a computed property frissítéséhez

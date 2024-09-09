@@ -58,6 +58,7 @@ export default {
         const token = response.data.token;
         localStorage.setItem('jwt_token', token); // Token mentése localStorage-ba
         // A token elmentése után a router újratöltése, a Todo app komponens betöltése
+        localStorage.setItem('username', this.username); // Username mentése localStorage-ba
         this.$router.push({ name: 'TodoApp' }).then(() => {
           this.$router.go(0); // Az oldal újratöltése a computed property frissítéséhez
         });
