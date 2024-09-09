@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request, send_file
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
 from models import create_db_connection, User, Todo, TodoSchema
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy.exc import SQLAlchemyError
 from utils import set_time_zone, set_jwt_token
 import datetime
@@ -67,6 +67,42 @@ def login():
     access_token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(hours=1))
     
     return jsonify({"token": access_token}), 200
+
+
+@app.route('/auth/register', methods=['POST'])
+def register():
+    try:
+        # Kérésből beérkező adatok
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        # Ellenőrizzük, hogy a felhasználónév és jelszó nincs-e üresen
+        if not username or not password:
+            return jsonify({"error": "Username and password are required"}), 400
+
+        # Ellenőrizzük, hogy létezik-e már ilyen felhasználónév az adatbázisban
+        existing_user = session.query(User).filter_by(username=username).first()
+        if existing_user:
+            return jsonify({"error": "Username already exists"}), 400
+
+        # Jelszó hash-elése biztonságosan
+        hashed_password = generate_password_hash(password)
+
+        # Új felhasználó létrehozása
+        new_user = User(username=username, password_hash=hashed_password)
+        session.add(new_user)
+        session.commit()
+
+        # (Opcionális) Automatikus bejelentkezés regisztráció után: JWT token létrehozása
+        access_token = create_access_token(identity=new_user.id, expires_delta=datetime.timedelta(hours=1))
+
+        # Visszaküldjük a tokent vagy sikeres regisztrációs üzenetet
+        return jsonify({"message": "User registered successfully", "token": access_token}), 201
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/auth/logout', methods=['POST'])
 @jwt_required()  # Csak bejelentkezett felhasználók

@@ -1,22 +1,70 @@
 <template>
-  <div class="todo-app">
-    <h1>Todo App</h1>
+  <div class="todo-app container mt-5">
+    <h1 class="mb-4">Todo List</h1>
 
-    <input v-model="newTodo" @keyup.enter="addTodo" placeholder="Add a new todo" />
+    <div class="input-group mb-3">
+      <input
+        v-model="newTodo"
+        @keyup.enter="addTodo"
+        class="form-control"
+        placeholder="Add a new todo"
+      />
+      <button @click="addTodo" class="btn btn-primary">Add</button>
+    </div>
 
-    <ul>
-      <li v-for="(todo, index) in todos" :key="todo.id">
-        <label v-if="!todo.isEditing" :class="{ completed: todo.completed }">
-          <input type="checkbox" v-model="todo.completed" @change="updateTodo(todo)" />
-          {{ todo.title }}
-        </label>
-        <input v-if="todo.isEditing" v-model="todo.title" @keyup.enter="doneEdit(todo)" @blur="doneEdit(todo)" />
-
-        <button @click="editTodo(index)" v-if="!todo.isEditing">Edit</button>
-        <button @click="doneEdit(todo)" v-if="todo.isEditing">Save</button>
-        <button @click="removeTodo(index, todo.id)">Delete</button>
-      </li>
-    </ul>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Todo</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="(todo, index) in todos"
+          :key="todo.id"
+          :class="index % 2 === 0 ? 'table-light' : 'table-secondary'">
+          <td>
+            <div v-if="!todo.isEditing" :class="{ completed: todo.completed }">
+              <input
+                type="checkbox"
+                v-model="todo.completed"
+                @change="updateTodo(todo)"
+                class="form-check-input me-2"
+              />
+              {{ todo.title }}
+            </div>
+            <div v-if="todo.isEditing">
+              <input
+                v-model="todo.title"
+                @keyup.enter="doneEdit(todo)"
+                @blur="doneEdit(todo)"
+                class="form-control"
+              />
+            </div>
+          </td>
+          <td>
+            <div v-if="!todo.isEditing">
+              <button
+                @click="editTodo(index)"
+                class="btn btn-outline-primary me-2"
+              >
+                Edit
+              </button>
+              <button
+                @click="removeTodo(index, todo.id)"
+                class="btn btn-outline-danger"
+              >
+                Delete
+              </button>
+            </div>
+            <div v-if="todo.isEditing">
+              <button @click="doneEdit(todo)" class="btn btn-success">Save</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -34,7 +82,6 @@ export default {
     this.fetchTodos();
   },
   methods: {
-    // Helper metódus az Authorization fejléc beállításához
     getAuthHeader() {
       const token = localStorage.getItem('jwt_token');
       return {
@@ -65,15 +112,14 @@ export default {
             completed: false
           }, this.getAuthHeader());
 
-          // Push the new todo returned from the server
           this.todos.push({
-            id: response.data.id, // Get the real ID from the backend
+            id: response.data.id,
             title: response.data.title,
             completed: response.data.completed,
             isEditing: false
           });
 
-          this.newTodo = ''; // Reset the input field
+          this.newTodo = '';
         } catch (error) {
           console.error('Error adding todo:', error);
         }
@@ -81,10 +127,7 @@ export default {
     },
     async removeTodo(index, id) {
       try {
-        // Send a DELETE request to the backend
         await axios.delete(`http://127.0.0.1:88/todos/${id}`, this.getAuthHeader());
-
-        // If successful, remove the todo from the list
         this.todos.splice(index, 1);
       } catch (error) {
         console.error('Error deleting todo:', error);
@@ -96,7 +139,6 @@ export default {
     async doneEdit(todo) {
       if (todo.title.trim()) {
         try {
-          // Send a PUT request to update the todo on the server
           await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
             title: todo.title,
             completed: todo.completed
@@ -112,7 +154,6 @@ export default {
     },
     async updateTodo(todo) {
       try {
-        // Send a PUT request to update the todo's completed status
         await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
           title: todo.title,
           completed: todo.completed
@@ -127,32 +168,14 @@ export default {
 
 <style scoped>
 .todo-app {
-  max-width: 600px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-input[type="text"] {
-  padding: 10px;
-  font-size: 16px;
-  width: 80%;
-  margin-bottom: 20px;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #ccc;
+  max-width: 800px;
 }
 
 .completed {
   text-decoration: line-through;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f0f0f0;
 }
 </style>
