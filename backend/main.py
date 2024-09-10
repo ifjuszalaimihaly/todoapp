@@ -1,10 +1,10 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
 from models import create_db_connection, User, Todo, TodoSchema
 from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy.exc import SQLAlchemyError
-from utils import set_time_zone, set_jwt_token, convert_utc_to_timzone
+from utils import set_time_zone, set_jwt_token, convert_due_date
 from marshmallow import ValidationError
 from datetime import datetime
 import datetime
@@ -125,6 +125,8 @@ def create_todo():
     try:
         data = request.json
 
+        print(data)
+
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
         user_id = get_jwt_identity()
 
@@ -132,31 +134,13 @@ def create_todo():
         validated_data = todo_schema.load(data)
 
 
-        # Dátum konvertálása az ISO 8601 formátumból (pl. 2024-09-11T22:00:00.000Z) YYYY-MM-DD formátumra
-        if 'due_date' in validated_data and validated_data['due_date']:
-            due_date_str = validated_data['due_date']
-
-            print(type(due_date_str))
-            
-            if isinstance(due_date_str, str):
-                try:
-                    # Konvertáljuk a string formátumú dátumot 'YYYY-MM-DD' formátumra
-                    due_date = datetime.datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
-                    # Időzóna konvertálása
-                    due_date = convert_utc_to_timzone(due_date)
-                    # Ha már datetime objektum, csak a date részt nyerjük ki
-                    due_date = due_date.date()
-                except ValueError:
-                    return jsonify({"error": "Invalid date format"}), 400
-            elif isinstance(due_date_str, datetime.datetime):
-                # Időzóna konvertálása
-                due_date = convert_utc_to_timzone(due_date_str)
-                # Ha már datetime objektum, csak a date részt nyerjük ki
-                due_date = due_date.date()
-            else:
-                return jsonify({"error": "Invalid date format"}), 400
+        if 'due_date' in validated_data and validated_data['due_date'] is not None:
+            try:
+                due_date = convert_due_date(validated_data['due_date'])
+            except ValueError as ve:
+                return jsonify({"error": str(ve)}), 400
         else:
-            due_date = None  # Ha nincs megadva dátum
+            due_date = None
 
         # Létrehozunk egy új Todo-t a bejelentkezett felhasználóhoz
         new_todo = Todo(
@@ -230,14 +214,15 @@ def update_todo(id):
             return jsonify({"error": "Todo not found"}), 404
         
         data = request.json
+        print(data)
 
         # Frissítjük a 'title', 'due_date' és 'completed' mezőket, ha a kérés tartalmazza azokat
         if 'title' in data and data['title'] is not None:
             todo.title = data['title']
         if 'completed' in data and data['completed'] is not None:
             todo.completed = data['completed']
-        if 'due_date' in data and data['due_date'] is not None:
-            todo.due_date = data['due_date'] 
+        if 'dueDate' in data and data['dueDate']  is not None:
+            todo.due_date = data['dueDate']
 
         session.commit()
         return jsonify(todo_schema.dump(todo)), 200

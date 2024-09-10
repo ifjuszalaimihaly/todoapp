@@ -10,8 +10,8 @@
         class="form-control"
         placeholder="Add a new todo"
       />
-      <!-- Date picker input -->
-      <Datepicker v-model="dueDate" class="form-control me-2" placeholder="Select due date" />
+      <!-- Date input -->
+      <input type="date" v-model="dueDate" class="form-control me-2" placeholder="Select due date" />
       <button @click="addTodo" class="btn btn-primary">Add</button>
     </div>
 
@@ -47,7 +47,15 @@
               />
             </div>
           </td>
-          <td>{{ todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : 'No due date' }}</td>
+          <td>
+            <div v-if="!todo.isEditing">
+              <!-- Show due date when not editing -->
+              {{ todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : 'No due date' }}
+            </div>
+            <div v-if="todo.isEditing">
+              <input type="date" v-model="todo.dueDate" class="form-control" />
+            </div>
+          </td>
           <td>
             <div v-if="!todo.isEditing">
               <button
@@ -75,12 +83,8 @@
 
 <script>
 import axios from 'axios';
-import Datepicker from 'vue3-datepicker'; // Import the datepicker component
 
 export default {
-  components: {
-    Datepicker // Register the component
-  },
   data() {
     return {
       newTodo: '',
@@ -117,12 +121,14 @@ export default {
     },
     async addTodo() {
       if (this.newTodo.trim()) {
+        console.log(this.dueDate)
         try {
           const response = await axios.post('http://127.0.0.1:88/todos', {
             title: this.newTodo,
             completed: false,
             dueDate: this.dueDate // Add the due date to the request
           }, this.getAuthHeader());
+          console.log(this.dueDate)
           this.todos.push({
             id: response.data.id,
             title: response.data.title,
