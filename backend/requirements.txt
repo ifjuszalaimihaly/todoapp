@@ -8,3 +8,4 @@ flask-cors
 marshmallow
 Flask-JWT-Extended
 werkzeug
+pytz

@@ -2,6 +2,7 @@
   <div class="todo-app container mt-5">
     <h1 class="mb-4">Todo List</h1>
 
+    <!-- Input for adding new todo -->
     <div class="input-group mb-3">
       <input
         v-model="newTodo"
@@ -9,6 +10,8 @@
         class="form-control"
         placeholder="Add a new todo"
       />
+      <!-- Date picker input -->
+      <Datepicker v-model="dueDate" class="form-control me-2" placeholder="Select due date" />
       <button @click="addTodo" class="btn btn-primary">Add</button>
     </div>
 
@@ -16,6 +19,7 @@
       <thead>
         <tr>
           <th>Todo</th>
+          <th>Due Date</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -43,6 +47,7 @@
               />
             </div>
           </td>
+          <td>{{ todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : 'No due date' }}</td>
           <td>
             <div v-if="!todo.isEditing">
               <button
@@ -70,11 +75,16 @@
 
 <script>
 import axios from 'axios';
+import Datepicker from 'vue3-datepicker'; // Import the datepicker component
 
 export default {
+  components: {
+    Datepicker // Register the component
+  },
   data() {
     return {
       newTodo: '',
+      dueDate: null, // Store the selected due date
       todos: []
     };
   },
@@ -98,7 +108,8 @@ export default {
           id: todo.id,
           title: todo.title,
           completed: todo.completed || false,
-          isEditing: false
+          isEditing: false,
+          dueDate: todo.dueDate || null // Handle due date
         }));
       } catch (error) {
         console.error('Error fetching todos:', error);
@@ -109,17 +120,19 @@ export default {
         try {
           const response = await axios.post('http://127.0.0.1:88/todos', {
             title: this.newTodo,
-            completed: false
+            completed: false,
+            dueDate: this.dueDate // Add the due date to the request
           }, this.getAuthHeader());
-
           this.todos.push({
             id: response.data.id,
             title: response.data.title,
             completed: response.data.completed,
-            isEditing: false
+            isEditing: false,
+            dueDate: response.data.dueDate // Add due date to the new todo
           });
 
           this.newTodo = '';
+          this.dueDate = null; // Reset the due date
         } catch (error) {
           console.error('Error adding todo:', error);
         }
@@ -141,7 +154,8 @@ export default {
         try {
           await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
             title: todo.title,
-            completed: todo.completed
+            completed: todo.completed,
+            dueDate: todo.dueDate // Add due date to the update
           }, this.getAuthHeader());
 
           todo.isEditing = false;
@@ -156,7 +170,8 @@ export default {
       try {
         await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
           title: todo.title,
-          completed: todo.completed
+          completed: todo.completed,
+          dueDate: todo.dueDate // Update due date
         }, this.getAuthHeader());
       } catch (error) {
         console.error('Error updating todo:', error);

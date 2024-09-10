@@ -4,7 +4,9 @@ from flask_cors import CORS
 from models import create_db_connection, User, Todo, TodoSchema
 from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy.exc import SQLAlchemyError
-from utils import set_time_zone, set_jwt_token
+from utils import set_time_zone, set_jwt_token, convert_utc_to_timzone
+from marshmallow import ValidationError
+from datetime import datetime
 import datetime
 
 set_time_zone()
@@ -126,15 +128,53 @@ def create_todo():
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
         user_id = get_jwt_identity()
 
+        # Validálás és deszerializálás a séma használatával
+        validated_data = todo_schema.load(data)
+
+
+        # Dátum konvertálása az ISO 8601 formátumból (pl. 2024-09-11T22:00:00.000Z) YYYY-MM-DD formátumra
+        if 'due_date' in validated_data and validated_data['due_date']:
+            due_date_str = validated_data['due_date']
+
+            print(type(due_date_str))
+            
+            if isinstance(due_date_str, str):
+                try:
+                    # Konvertáljuk a string formátumú dátumot 'YYYY-MM-DD' formátumra
+                    due_date = datetime.datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+                    # Időzóna konvertálása
+                    due_date = convert_utc_to_timzone(due_date)
+                    # Ha már datetime objektum, csak a date részt nyerjük ki
+                    due_date = due_date.date()
+                except ValueError:
+                    return jsonify({"error": "Invalid date format"}), 400
+            elif isinstance(due_date_str, datetime.datetime):
+                # Időzóna konvertálása
+                due_date = convert_utc_to_timzone(due_date_str)
+                # Ha már datetime objektum, csak a date részt nyerjük ki
+                due_date = due_date.date()
+            else:
+                return jsonify({"error": "Invalid date format"}), 400
+        else:
+            due_date = None  # Ha nincs megadva dátum
+
         # Létrehozunk egy új Todo-t a bejelentkezett felhasználóhoz
         new_todo = Todo(
-            title=data.get('title'),
+            title=validated_data.get('title'),
+            due_date=due_date,  # A due_date fogadása
             user_id=user_id  # Felhasználó ID hozzárendelése a todo-hoz
         )
+
+
         session.add(new_todo)
         session.commit()
 
         return jsonify(todo_schema.dump(new_todo)), 201
+    
+    except ValidationError as err:
+        print(err.messages)
+        # Ha a validáció nem sikerült, visszaküldjük a hibákat
+        return jsonify(err.messages), 400
 
     except SQLAlchemyError as e:
         session.rollback()
@@ -191,11 +231,13 @@ def update_todo(id):
         
         data = request.json
 
-        # Frissítjük a 'title' és 'completed' mezőket, ha a kérés tartalmazza azokat
+        # Frissítjük a 'title', 'due_date' és 'completed' mezőket, ha a kérés tartalmazza azokat
         if 'title' in data and data['title'] is not None:
             todo.title = data['title']
         if 'completed' in data and data['completed'] is not None:
             todo.completed = data['completed']
+        if 'due_date' in data and data['due_date'] is not None:
+            todo.due_date = data['due_date'] 
 
         session.commit()
         return jsonify(todo_schema.dump(todo)), 200
