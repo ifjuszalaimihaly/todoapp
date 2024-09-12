@@ -51,7 +51,7 @@
       async register() {
         try {
           // Regisztrációs adatokat küldünk a backendnek
-          const response = await axios.post('http://localhost:88/auth/register', {
+          const response = await axios.post(`${process.env.VUE_APP_API_BASE_URL}/auth/register`, {
             username: this.username,
             password: this.password
           });

@@ -107,7 +107,7 @@ export default {
 
     async fetchTodos() {
       try {
-        const response = await axios.get('http://127.0.0.1:88/todos', this.getAuthHeader());
+        const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/todos`, this.getAuthHeader());
         this.todos = response.data.map(todo => ({
           id: todo.id,
           title: todo.title,
@@ -121,9 +121,8 @@ export default {
     },
     async addTodo() {
       if (this.newTodo.trim()) {
-        console.log(this.dueDate)
         try {
-          const response = await axios.post('http://127.0.0.1:88/todos', {
+          const response = await axios.post(`${process.env.VUE_APP_API_BASE_URL}/todos`, {
             title: this.newTodo,
             completed: false,
             dueDate: this.dueDate // Add the due date to the request
@@ -146,7 +145,7 @@ export default {
     },
     async removeTodo(index, id) {
       try {
-        await axios.delete(`http://127.0.0.1:88/todos/${id}`, this.getAuthHeader());
+        await axios.delete(`${process.env.VUE_APP_API_BASE_URL}/todos/${id}`, this.getAuthHeader());
         this.todos.splice(index, 1);
       } catch (error) {
         console.error('Error deleting todo:', error);
@@ -158,7 +157,7 @@ export default {
     async doneEdit(todo) {
       if (todo.title.trim()) {
         try {
-          await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
+          await axios.put(`${process.env.VUE_APP_API_BASE_URL}/todos/${todo.id}`, {
             title: todo.title,
             completed: todo.completed,
             dueDate: todo.dueDate // Add due date to the update
@@ -174,7 +173,7 @@ export default {
     },
     async updateTodo(todo) {
       try {
-        await axios.put(`http://127.0.0.1:88/todos/${todo.id}`, {
+        await axios.put(`${process.env.VUE_APP_API_BASE_URL}/todos/${todo.id}`, {
           title: todo.title,
           completed: todo.completed,
           dueDate: todo.dueDate // Update due date
