@@ -32,6 +32,7 @@ def set_jwt_token():
     return jwt_secret_key
 
 def convert_due_date(due_date_str):
+    print(due_date_str)
     # Dátum konvertálása az ISO 8601 formátumból (pl. 2024-09-11T22:00:00.000Z) YYYY-MM-DD formátumra        
     if isinstance(due_date_str, str):
         try:

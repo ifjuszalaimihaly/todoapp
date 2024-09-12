@@ -130,24 +130,13 @@ def create_todo():
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
         user_id = get_jwt_identity()
 
-        # Validálás és deszerializálás a séma használatával
-        validated_data = todo_schema.load(data)
-
-
-        if 'due_date' in validated_data and validated_data['due_date'] is not None:
-            try:
-                due_date = convert_due_date(validated_data['due_date'])
-            except ValueError as ve:
-                return jsonify({"error": str(ve)}), 400
-        else:
-            due_date = None
-
         # Létrehozunk egy új Todo-t a bejelentkezett felhasználóhoz
-        new_todo = Todo(
-            title=validated_data.get('title'),
-            due_date=due_date,  # A due_date fogadása
-            user_id=user_id  # Felhasználó ID hozzárendelése a todo-hoz
-        )
+        new_todo = Todo()
+
+        if 'title' in data and data['title'] is not None:
+            new_todo.title = data['title']
+        if 'dueDate' in data and data['dueDate'] is not None:
+            new_todo.due_date = data['dueDate']
 
 
         session.add(new_todo)
@@ -221,7 +210,7 @@ def update_todo(id):
             todo.title = data['title']
         if 'completed' in data and data['completed'] is not None:
             todo.completed = data['completed']
-        if 'dueDate' in data and data['dueDate']  is not None:
+        if 'dueDate' in data and data['dueDate'] is not None:
             todo.due_date = data['dueDate']
 
         session.commit()
