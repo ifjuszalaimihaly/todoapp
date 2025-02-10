@@ -155,14 +155,14 @@ def create_todo():
 
 # Read - Minden tétel lekérdezése
 @app.route('/todos', methods=['GET'])
-@jwt_required()  # Bejelentkezés szükséges
+#@jwt_required()  # Bejelentkezés szükséges
 def get_todos():
     try:
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
-        user_id = get_jwt_identity()
+        #user_id = get_jwt_identity()
 
         # Csak a bejelentkezett felhasználó todo-it kérjük le
-        todos = session.query(Todo).filter_by(user_id=user_id).all()
+        todos = session.query(Todo).all()
 
         return jsonify([todo_schema.dump(todo) for todo in todos]), 200
 

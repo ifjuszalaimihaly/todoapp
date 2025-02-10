@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 interface TodoItem {
   id: number;
-  text: string;
+  title: string;
+  dueDate: string;
   completed: boolean;
 }
 
@@ -10,12 +12,29 @@ function TodoList() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState("");
 
+  // TODO-k lekérése az API-ról
+  const fetchTodos = async () => {
+    try {
+      const response = await axios.get<TodoItem[]>("http://127.0.0.1:88/todos");
+      console.log(response);
+      setTodos(response.data);
+    } catch (error) {
+      console.error("Hiba történt a TODO-k lekérése közben:", error);
+    }
+  };
+
+  // useEffect, hogy az adatok betöltődjenek a komponens indulásakor
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
   const addTodo = () => {
     if (newTodo.trim() === "") return;
 
     const newTask: TodoItem = {
       id: Date.now(),
-      text: newTodo,
+      title: newTodo,
+      dueDate: "",
       completed: false,
     };
 
@@ -24,18 +43,21 @@ function TodoList() {
   };
 
   const toggleTodo = (id: number) => {
-    setTodos(todos.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
   };
 
   const removeTodo = (id: number) => {
-    setTodos(todos.filter(todo => todo.id !== id));
+    setTodos(todos.filter((todo) => todo.id !== id));
   };
 
   return (
     <div>
       <h2>Todo List</h2>
+      <button onClick={fetchTodos}>🔄 Frissítés</button>
       <input
         type="text"
         value={newTodo}
@@ -44,9 +66,12 @@ function TodoList() {
       />
       <button onClick={addTodo}>Add</button>
       <ul>
-        {todos.map(todo => (
-          <li key={todo.id} style={{ textDecoration: todo.completed ? "line-through" : "none" }}>
-            {todo.text}
+        {todos.map((todo) => (
+          <li
+            key={todo.id}
+            style={{ textDecoration: todo.completed ? "line-through" : "none" }}
+          >
+            {todo.title} - {todo.dueDate}
             <button onClick={() => toggleTodo(todo.id)}>✔</button>
             <button onClick={() => removeTodo(todo.id)}>❌</button>
           </li>
@@ -54,5 +79,6 @@ function TodoList() {
       </ul>
     </div>
   );
-};
+}
+
 export default TodoList;
