@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import Table from 'react-bootstrap/Table';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
 
 interface TodoItem {
   id: number;
@@ -8,7 +11,7 @@ interface TodoItem {
   completed: boolean;
 }
 
-function TodoList() {
+const TodoList = ({}) => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState("");
 
@@ -55,29 +58,34 @@ function TodoList() {
   };
 
   return (
-    <div>
-      <h2>Todo List</h2>
-      <button onClick={fetchTodos}>🔄 Frissítés</button>
-      <input
-        type="text"
-        value={newTodo}
-        onChange={(e) => setNewTodo(e.target.value)}
-        placeholder="Add a new task..."
-      />
-      <button onClick={addTodo}>Add</button>
-      <ul>
+    <Table striped bordered hover>
+      <thead>
+        <tr>
+          <th>Todo</th>
+          <th>Due Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
         {todos.map((todo) => (
-          <li
-            key={todo.id}
-            style={{ textDecoration: todo.completed ? "line-through" : "none" }}
-          >
-            {todo.title} - {todo.dueDate}
-            <button onClick={() => toggleTodo(todo.id)}>✔</button>
-            <button onClick={() => removeTodo(todo.id)}>❌</button>
-          </li>
+          <tr key={todo.id}>
+            <td>
+              <Form.Check 
+                type="checkbox"
+                checked={todo.completed}
+                label={todo.title}
+                onChange={() => toggleTodo(todo.id)}
+              />
+            </td>
+            <td>{todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : 'No due date'}</td>
+            <td>
+              <Button variant="outline-primary">Edit</Button>{' '}
+              <Button variant="outline-danger" onClick={() => removeTodo(todo.id)}>Delete</Button>
+            </td>
+          </tr>
         ))}
-      </ul>
-    </div>
+      </tbody>
+    </Table>
   );
 }
 
