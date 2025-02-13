@@ -45,12 +45,34 @@ const TodoList = ({}) => {
     setNewTodo("");
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
+  const toggleTodo = async (id: number) => {
+    try {
+      // Megkeressük az adott id-jú todo-t a jelenlegi állapotban
+      const todoToUpdate = todos.find((todo) => todo.id === id);
+      if (!todoToUpdate) {
+        console.error(`Nem található TODO az adott id-val: ${id}`);
+        return;
+      }
+  
+      // Az új completed érték az ellenkezője lesz a jelenleginek
+      const updatedCompleted = !todoToUpdate.completed;
+  
+      // API hívás a módosított értékkel
+      const response = await axios.put(`http://127.0.0.1:88/todos/${id}`, {
+        completed: updatedCompleted,
+      });
+  
+      console.log("TODO frissítve:", response.data);
+  
+      // Lokális state frissítés
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) =>
+          todo.id === id ? { ...todo, completed: updatedCompleted } : todo
+        )
+      );
+    } catch (error) {
+      console.error(`Hiba történt a TODO frissítése közben (id: ${id}):`, error);
+    }
   };
 
   const removeTodo = (id: number) => {
