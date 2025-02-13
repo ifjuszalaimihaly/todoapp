@@ -222,14 +222,14 @@ def update_todo(id):
 
 # Delete - Tétel törlése ID alapján
 @app.route('/todos/<int:id>', methods=['DELETE'])
-@jwt_required()  # Bejelentkezés szükséges
+#@jwt_required()  # Bejelentkezés szükséges
 def delete_todo(id):
     try:
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
-        user_id = get_jwt_identity()
+        #user_id = get_jwt_identity()
 
         # Csak a bejelentkezett felhasználó todo-ját kérjük le
-        todo = session.query(Todo).filter_by(id=id, user_id=user_id).first()
+        todo = session.query(Todo).filter_by(id=id).first()
 
         if todo is None:
             return jsonify({"error": "Todo not found"}), 404

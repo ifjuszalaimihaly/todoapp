@@ -75,8 +75,18 @@ const TodoList = ({}) => {
     }
   };
 
-  const removeTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+  const removeTodo = async (id: number) => {
+    try {
+      // API hívás a TODO törlésére
+      await axios.delete(`http://127.0.0.1:88/todos/${id}`);
+  
+      console.log(`TODO (id: ${id}) törölve.`);
+  
+      // Lokális állapot frissítése: kiszűrjük a törölt elemet
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+    } catch (error) {
+      console.error(`Hiba történt a TODO törlése közben (id: ${id}):`, error);
+    }
   };
 
   return (
