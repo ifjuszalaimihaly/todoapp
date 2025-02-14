@@ -27,20 +27,20 @@ CORS(app, resources={r"/*": {"origins":[
     ]}}
 )
 
-app.config['JWT_SECRET_KEY'] = set_jwt_token()
-app.config['JWT_BLACKLIST_ENABLED'] = True  # Engedélyezzük a tiltólistát
-app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']  # Csak az access tokeneket figyeljük
-jwt = JWTManager(app)
+#app.config['JWT_SECRET_KEY'] = set_jwt_token()
+#app.config['JWT_BLACKLIST_ENABLED'] = True  # Engedélyezzük a tiltólistát
+#app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']  # Csak az access tokeneket figyeljük
+#jwt = JWTManager(app)
 
 
 # Blacklist eltárolása (egyszerű megoldásként egy szettben)
-blacklist = set()
+#blacklist = set()
 
 # Callback függvény a blacklist ellenőrzéséhez
-@jwt.token_in_blocklist_loader
-def check_if_token_in_blacklist(jwt_header, jwt_payload):
-    jti = jwt_payload['jti']  # A token azonosítója (JTI)
-    return jti in blacklist  # True ha a token a tiltólistában van
+#@jwt.token_in_blocklist_loader
+#def check_if_token_in_blacklist(jwt_header, jwt_payload):
+#    jti = jwt_payload['jti']  # A token azonosítója (JTI)
+#    return jti in blacklist  # True ha a token a tiltólistában van
 
 #new_user = User(username='testuser2')
 #new_user.set_password('securepassword')  # Beállítjuk a jelszót hash formában
@@ -120,7 +120,7 @@ def logout():
 
 # Create - Új tétel hozzáadása
 @app.route('/todos', methods=['POST'])
-@jwt_required()  # Bejelentkezés szükséges
+#@jwt_required()  # Bejelentkezés szükséges
 def create_todo():
     try:
         data = request.json
@@ -128,7 +128,7 @@ def create_todo():
         print(data)
 
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
-        user_id = get_jwt_identity()
+        #user_id = get_jwt_identity()
 
         # Létrehozunk egy új Todo-t a bejelentkezett felhasználóhoz
         new_todo = Todo()

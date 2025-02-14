@@ -3,6 +3,7 @@ import axios from "axios";
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import {InputGroup } from 'react-bootstrap';
 
 interface TodoItem {
   id: number;
@@ -14,6 +15,7 @@ interface TodoItem {
 const TodoList = ({}) => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState("");
+  const [newDueDate, setNewDueDate] = useState("");
 
   // TODO-k lekérése az API-ról
   const fetchTodos = async () => {
@@ -31,18 +33,26 @@ const TodoList = ({}) => {
     fetchTodos();
   }, []);
 
-  const addTodo = () => {
+  const addTodo = async () => {
     if (newTodo.trim() === "") return;
-
-    const newTask: TodoItem = {
-      id: Date.now(),
+  
+    const newTask: Omit<TodoItem, "id"> = {
       title: newTodo,
-      dueDate: "",
+      dueDate: newDueDate,
       completed: false,
     };
-
-    setTodos([...todos, newTask]);
-    setNewTodo("");
+  
+    try {
+      // TODO hozzáadása az API-hoz
+      const response = await axios.post<TodoItem>("http://localhost:88/todos", newTask);
+  
+      // Sikeres válasz esetén frissítjük a lokális állapotot
+      setTodos([...todos, response.data]);
+      setNewTodo(""); // Input mező törlése
+      setNewDueDate(""); // Dátum mező törlése
+    } catch (error) {
+      console.error("Hiba történt a TODO hozzáadása közben:", error);
+    }
   };
 
   const toggleTodo = async (id: number) => {
@@ -90,6 +100,30 @@ const TodoList = ({}) => {
   };
 
   return (
+    <div>
+          
+          <div className="mb-3">
+      <h1 className="mb-4">Todo List</h1>
+
+      <InputGroup>
+        <Form.Control
+          type="text"
+          value={newTodo}
+          onChange={(e) => setNewTodo(e.target.value)}
+          onKeyUp={(e) => e.key === "Enter" && addTodo()}
+          placeholder="Add a new todo"
+        />
+        <Form.Control
+          type="date"
+          value={newDueDate}
+          onChange={(e) => setNewDueDate(e.target.value)}
+        />
+        <Button onClick={addTodo} variant="primary">
+          Add
+        </Button>
+      </InputGroup>
+    </div>
+
     <Table striped bordered hover>
       <thead>
         <tr>
@@ -118,6 +152,7 @@ const TodoList = ({}) => {
         ))}
       </tbody>
     </Table>
+    </div>
   );
 }
 
