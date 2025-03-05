@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
@@ -11,8 +12,6 @@ import datetime
 
 set_time_zone()
 
-
-session = create_db_connection()
 
 # Serializer object for validation and conversion
 todo_schema = TodoSchema()
@@ -55,10 +54,11 @@ def hello():
 
 @app.route('/auth/login', methods=['POST'])
 def login():
+    
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-
+    session = create_db_connection()
     # Keressük meg a felhasználót az adatbázisban
     user = session.query(User).filter_by(username=username).first()
 
@@ -83,6 +83,7 @@ def register():
         if not username or not password:
             return jsonify({"error": "Username and password are required"}), 400
 
+        session = create_db_connection()
         # Ellenőrizzük, hogy létezik-e már ilyen felhasználónév az adatbázisban
         existing_user = session.query(User).filter_by(username=username).first()
         if existing_user:
@@ -95,6 +96,7 @@ def register():
         new_user = User(username=username, password_hash=hashed_password)
         session.add(new_user)
         session.commit()
+        session.close()
 
         # (Opcionális) Automatikus bejelentkezés regisztráció után: JWT token létrehozása
         access_token = create_access_token(identity=new_user.id, expires_delta=datetime.timedelta(hours=1))
@@ -138,7 +140,7 @@ def create_todo():
         if 'dueDate' in data and data['dueDate'] is not None:
             new_todo.due_date = data['dueDate']
 
-
+        session = create_db_connection()
         session.add(new_todo)
         session.commit()
 
@@ -161,13 +163,18 @@ def get_todos():
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
         #user_id = get_jwt_identity()
 
+        session = create_db_connection()
         # Csak a bejelentkezett felhasználó todo-it kérjük le
         todos = session.query(Todo).all()
+        session.commit()
 
         return jsonify([todo_schema.dump(todo) for todo in todos]), 200
 
     except SQLAlchemyError as e:
+        logging.error(e)
         return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
 # Read - Egy adott tétel lekérdezése ID alapján
 @app.route('/todos/<int:id>', methods=['GET'])
@@ -178,7 +185,9 @@ def get_todo(id):
         user_id = get_jwt_identity()
 
         # Csak a bejelentkezett felhasználó todo-ját kérjük le
+        session = create_db_connection()
         todo = session.query(Todo).filter_by(id=id, user_id=user_id).first()
+        session.close()
 
         if todo is None:
             return jsonify({"error": "Todo not found"}), 404
@@ -196,6 +205,7 @@ def update_todo(id):
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
         #user_id = get_jwt_identity()
 
+        session = create_db_connection()
         # Csak a bejelentkezett felhasználó todo-ját kérjük le
         todo = session.query(Todo).filter_by(id=id).first()
 
@@ -228,6 +238,7 @@ def delete_todo(id):
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
         #user_id = get_jwt_identity()
 
+        session = create_db_connection()
         # Csak a bejelentkezett felhasználó todo-ját kérjük le
         todo = session.query(Todo).filter_by(id=id).first()
 
