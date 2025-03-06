@@ -73,9 +73,11 @@ def login():
 
 @app.route('/auth/register', methods=['POST'])
 def register():
+    logging.error("REGISTER")
     try:
         # Kérésből beérkező adatok
         data = request.get_json()
+        logging.error(data)
         username = data.get('username')
         password = data.get('password')
 
@@ -95,16 +97,18 @@ def register():
         # Új felhasználó létrehozása
         new_user = User(username=username, password_hash=hashed_password)
         session.add(new_user)
-        session.commit()
-        session.close()
+        
 
         # (Opcionális) Automatikus bejelentkezés regisztráció után: JWT token létrehozása
         access_token = create_access_token(identity=new_user.id, expires_delta=datetime.timedelta(hours=1))
+        session.commit()
+        session.close()
 
         # Visszaküldjük a tokent vagy sikeres regisztrációs üzenetet
         return jsonify({"message": "User registered successfully", "token": access_token}), 201
 
     except SQLAlchemyError as e:
+        logging.error(e)
         session.rollback()
         return jsonify({"error": str(e)}), 500
 

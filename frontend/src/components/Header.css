@@ -1,0 +1,7 @@
+.navbar-text {
+    margin-right: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center; /* Függőlegesen középre igazítja a szöveget */
+    height: 100%; /* Győződjünk meg róla, hogy a szülő elem magasságához igazítjuk */
+  }

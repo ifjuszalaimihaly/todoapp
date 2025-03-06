@@ -1,10 +1,7 @@
-import { Link } from "react-router-dom";
-
 const Home = () => {
     return (
         <div>
-            <h1>Üdvözöllek!</h1>
-            <Link to="/login">Bejelentkezés</Link>
+            <h1>Welcome!</h1>
         </div>
     );
 };
