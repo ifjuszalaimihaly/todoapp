@@ -12,6 +12,15 @@ interface TodoItem {
   completed: boolean;
 }
 
+const getAuthHeader = () => {
+  const token = localStorage.getItem("jwt_token");
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+};
+
 const TodoList = () => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState("");
@@ -26,7 +35,7 @@ const TodoList = () => {
 
   const fetchTodos = async () => {
     try {
-      const response = await axios.get<TodoItem[]>("http://127.0.0.1:88/todos");
+      const response = await axios.get<TodoItem[]>("http://127.0.0.1:88/todos",getAuthHeader());
       setTodos(response.data);
     } catch (error) {
       console.error("Hiba történt a TODO-k lekérése közben:", error);
@@ -43,7 +52,7 @@ const TodoList = () => {
     };
 
     try {
-      const response = await axios.post<TodoItem>("http://localhost:88/todos", newTask);
+      const response = await axios.post<TodoItem>("http://localhost:88/todos", newTask, getAuthHeader());
       setTodos([...todos, response.data]);
       setNewTodo("");
       setNewDueDate("");
@@ -58,7 +67,7 @@ const TodoList = () => {
       if (!todoToUpdate) return;
 
       const updatedCompleted = !todoToUpdate.completed;
-      await axios.put(`http://127.0.0.1:88/todos/${id}`, { completed: updatedCompleted });
+      await axios.put(`http://127.0.0.1:88/todos/${id}`, { completed: updatedCompleted }, getAuthHeader());
 
       setTodos((prevTodos) =>
         prevTodos.map((todo) => (todo.id === id ? { ...todo, completed: updatedCompleted } : todo))
@@ -70,7 +79,7 @@ const TodoList = () => {
 
   const removeTodo = async (id: number) => {
     try {
-      await axios.delete(`http://127.0.0.1:88/todos/${id}`);
+      await axios.delete(`http://127.0.0.1:88/todos/${id}`, getAuthHeader());
       setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
     } catch (error) {
       console.error(`Hiba történt a TODO törlése közben (id: ${id}):`, error);
@@ -88,7 +97,7 @@ const TodoList = () => {
       await axios.put(`http://127.0.0.1:88/todos/${id}`, {
         title: editTitle,
         dueDate: editDueDate,
-      });
+      },getAuthHeader());
 
       setTodos((prevTodos) =>
         prevTodos.map((todo) => (todo.id === id ? { ...todo, title: editTitle, dueDate: editDueDate } : todo))

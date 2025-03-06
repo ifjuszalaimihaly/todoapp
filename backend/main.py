@@ -26,20 +26,20 @@ CORS(app, resources={r"/*": {"origins":[
     ]}}
 )
 
-#app.config['JWT_SECRET_KEY'] = set_jwt_token()
-#app.config['JWT_BLACKLIST_ENABLED'] = True  # Engedélyezzük a tiltólistát
-#app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']  # Csak az access tokeneket figyeljük
-#jwt = JWTManager(app)
+app.config['JWT_SECRET_KEY'] = set_jwt_token()
+app.config['JWT_BLACKLIST_ENABLED'] = True  # Engedélyezzük a tiltólistát
+app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']  # Csak az access tokeneket figyeljük
+jwt = JWTManager(app)
 
 
 # Blacklist eltárolása (egyszerű megoldásként egy szettben)
-#blacklist = set()
+blacklist = set()
 
 # Callback függvény a blacklist ellenőrzéséhez
-#@jwt.token_in_blocklist_loader
-#def check_if_token_in_blacklist(jwt_header, jwt_payload):
-#    jti = jwt_payload['jti']  # A token azonosítója (JTI)
-#    return jti in blacklist  # True ha a token a tiltólistában van
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blacklist(jwt_header, jwt_payload):
+    jti = jwt_payload['jti']  # A token azonosítója (JTI)
+    return jti in blacklist  # True ha a token a tiltólistában van
 
 #new_user = User(username='testuser2')
 #new_user.set_password('securepassword')  # Beállítjuk a jelszót hash formában
@@ -122,7 +122,7 @@ def logout():
 
 # Create - Új tétel hozzáadása
 @app.route('/todos', methods=['POST'])
-#@jwt_required()  # Bejelentkezés szükséges
+@jwt_required()  # Bejelentkezés szükséges
 def create_todo():
     try:
         data = request.json
@@ -130,7 +130,7 @@ def create_todo():
         print(data)
 
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
-        #user_id = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         # Létrehozunk egy új Todo-t a bejelentkezett felhasználóhoz
         new_todo = Todo()
@@ -139,6 +139,8 @@ def create_todo():
             new_todo.title = data['title']
         if 'dueDate' in data and data['dueDate'] is not None:
             new_todo.due_date = data['dueDate']
+            
+        new_todo.user_id = user_id
 
         session = create_db_connection()
         session.add(new_todo)
@@ -157,15 +159,15 @@ def create_todo():
 
 # Read - Minden tétel lekérdezése
 @app.route('/todos', methods=['GET'])
-#@jwt_required()  # Bejelentkezés szükséges
+@jwt_required()  # Bejelentkezés szükséges
 def get_todos():
     try:
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
-        #user_id = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         session = create_db_connection()
         # Csak a bejelentkezett felhasználó todo-it kérjük le
-        todos = session.query(Todo).all()
+        todos = session.query(Todo).filter_by(user_id=user_id).all()
         session.commit()
 
         return jsonify([todo_schema.dump(todo) for todo in todos]), 200
@@ -199,15 +201,15 @@ def get_todo(id):
 
 # Update - Tétel frissítése ID alapján
 @app.route('/todos/<int:id>', methods=['PUT'])
-#@jwt_required()  # Bejelentkezés szükséges
+@jwt_required()  # Bejelentkezés szükséges
 def update_todo(id):
     try:
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
-        #user_id = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         session = create_db_connection()
         # Csak a bejelentkezett felhasználó todo-ját kérjük le
-        todo = session.query(Todo).filter_by(id=id).first()
+        todo = session.query(Todo).filter_by(id=id, user_id=user_id).first()
 
         if todo is None:
             return jsonify({"error": "Todo not found"}), 404
@@ -232,15 +234,15 @@ def update_todo(id):
 
 # Delete - Tétel törlése ID alapján
 @app.route('/todos/<int:id>', methods=['DELETE'])
-#@jwt_required()  # Bejelentkezés szükséges
+@jwt_required()  # Bejelentkezés szükséges
 def delete_todo(id):
     try:
         # Lekérjük a bejelentkezett felhasználó azonosítóját a JWT-ből
-        #user_id = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         session = create_db_connection()
         # Csak a bejelentkezett felhasználó todo-ját kérjük le
-        todo = session.query(Todo).filter_by(id=id).first()
+        todo = session.query(Todo).filter_by(id=id, user_id=user_id).first()
 
         if todo is None:
             return jsonify({"error": "Todo not found"}), 404
